@@ -1,5 +1,5 @@
 # Team Hama Main Page
-![](img/Main.png)
+![](img/main.png)
 
 # Mentor : [SeokWoong Han](https://www.linkedin.com/in/seokwoong-han-175b8530?originalSubdomain=kr)
 ![](img/mentor.png)
