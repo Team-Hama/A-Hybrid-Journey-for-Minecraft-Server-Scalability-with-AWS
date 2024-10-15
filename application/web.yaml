@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hama-web # application 이름
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rttitity/manifast-hama-web.git # 깃허브 주소
+    targetRevision: main
+    path: . # 디렉토리 주소
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hama-web # Hama-web으로
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

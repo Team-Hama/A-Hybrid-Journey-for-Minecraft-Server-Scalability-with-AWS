@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: farm-app # application 이름
+  namespace: argocd # Hama-web으로
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/shlim0118/hama-deployment.git # 깃허브 주소
+    targetRevision: main
+    path: farm # 디렉토리 주소
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: game # Hama-web으로
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

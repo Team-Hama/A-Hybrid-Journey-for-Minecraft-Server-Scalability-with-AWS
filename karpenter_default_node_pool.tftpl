@@ -1,0 +1,35 @@
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    metadata:
+      labels:
+        intent: apps
+    spec:
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ${jsonencode(karpenter_arch_choices)}
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values: ${jsonencode(karpenter_instance_cpu_choices)}
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ${jsonencode(karpenter_capacity_type_choices)}
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ${jsonencode(karpenter_instance_category_choices)}
+      nodeClassRef:
+        name: default
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+      kubelet:
+        containerRuntime: containerd
+        systemReserved:
+          cpu: 100m
+          memory: 100Mi
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m

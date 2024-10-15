@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velocity-cloud-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/shlim0118/hama-deployment.git
+    targetRevision: main
+    path: velocity-onprem
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: game
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
