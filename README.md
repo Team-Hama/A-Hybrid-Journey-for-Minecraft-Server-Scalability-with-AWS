@@ -102,7 +102,7 @@ $ export AWS_DEFAULT_PROFILE=<your_aws_profile_name>
 Clone this repository to your local machine
 
 ```
-$ git clone https://github.com/ahmadalsajid/terraform-eks-karpenter.git
+$ git clone https://github.com/Team-Hama/A-Hybrid-Journey-for-Minecraft-Server-Scalability-with-AWS.git
 ```
 
 Change directory to [infra](./infra) and update the
