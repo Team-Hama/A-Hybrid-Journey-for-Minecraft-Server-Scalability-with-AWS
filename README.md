@@ -473,7 +473,7 @@ the resources.
 * https://github.com/aws-samples/eks-blueprints-add-ons/tree/main/add-ons
 * https://github.com/aws-ia/terraform-aws-eks-blueprints/blob/main/patterns/
 
-
+[Demo video](https://www.youtube.com/watch?v=U3gMNRRNA4M)
 
 
 # Mentor : [SeokWoong Han](https://www.linkedin.com/in/seokwoong-han-175b8530?originalSubdomain=kr)
