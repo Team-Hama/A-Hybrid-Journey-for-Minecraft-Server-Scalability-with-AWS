@@ -492,4 +492,4 @@ the resources.
 # Thanks to
 | <a href="https://github.com/pcmin929"><img src="https://github.com/pcmin929.png" width="80px"></a> |
 | :---: |
-| 박찬민 (멘토) |
+| 박찬민 (전임강사) |
