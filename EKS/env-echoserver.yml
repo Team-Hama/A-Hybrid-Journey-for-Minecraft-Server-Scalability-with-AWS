@@ -1,0 +1,134 @@
+# create the namespace first
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: envechoserver
+
+---
+# get the secrets from AWS parameter store
+# https://external-secrets.io/v0.10.3/provider/aws-parameter-store/
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: envechoserver-secrets
+  namespace: envechoserver
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: clusterwide-secrets
+    kind: ClusterSecretStore
+  target:
+    name: database-secret
+    creationPolicy: Owner
+  # extracts Parameter store String/SecureString data
+  data:
+  - secretKey: db-admin
+    remoteRef:
+      key: "/eks-cluster/db-admin"
+  - secretKey: db-password
+    remoteRef:
+      key: "/eks-cluster/db-password"
+  # extracts parameter store JSON data stored in both String/SecureString
+  dataFrom:
+  - extract:
+      key: "/eks-cluster/json_credentials"
+
+---
+# create the deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envechoserver
+  namespace: envechoserver
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  selector:
+    matchLabels:
+      app: envechoserver
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: envechoserver
+    spec:
+      containers:
+        - image: ahmadalsajid/envechoserver
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          imagePullPolicy: Always
+          name: envechoserver
+          ports:
+            - containerPort: 3000
+          env:
+            - name: db-admin
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: db-admin
+            - name: db-password
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: db-password
+            - name: another-db-admin
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: username
+            - name: another-db-password
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: password
+
+---
+# create the service
+apiVersion: v1
+kind: Service
+metadata:
+  name: envechoserver
+  namespace: envechoserver
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+  type: NodePort
+  selector:
+    app: envechoserver
+
+---
+# create Ingress for AWS ALB
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: envechoserver
+  namespace: envechoserver
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/tags: Environment=dev,Team=test
+    alb.ingress.kubernetes.io/rate-limit: |
+      {
+        " BurstLimit": 100,
+        " RateLimit": 100,
+        " Unit": "count/min"
+      }
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: envechoserver
+                port:
+                  number: 80

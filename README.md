@@ -60,16 +60,16 @@ Before you begin, ensure that the following tools are installed:
 ```
 # Step 1: Create an IAM user named 'admin'
 # This command creates a new IAM user named 'admin'.
-> aws iam create-user --user-name admin
+$ aws iam create-user --user-name admin
 
 # Step 2: Attach AdministratorAccess policy to the 'admin' user
 # This grants full admin rights to the user, enabling access to all AWS resources.
-> aws iam attach-user-policy --user-name admin --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+$ aws iam attach-user-policy --user-name admin --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
 
 # Step 3: (Optional) Create an access key for programmatic access
 # Generating an access key allows 'admin' to interact with AWS services programmatically. 
 # Make sure to store the access key and secret key securely.
-> aws iam create-access-key --user-name admin
+$ aws iam create-access-key --user-name admin
 # you can check AccessKeyId and SecretAccessKey
 {
     "AccessKey": {
@@ -83,32 +83,16 @@ Before you begin, ensure that the following tools are installed:
 ```
 
 ```
-> aws configure
+$ aws configure
 AWS Access Key ID [None]: YOUR_ACCESS_KEY_ID
 AWS Secret Access Key [None]: YOUR_SECRET_ACCESS_KEY
 Default region name [None]: ap-northeast-2   # region you wanna launch resource in 
 Default output format [None]: json           # json or yaml etc
 ```
 
-
-
-Configure your AWS profile with appropriate credentials with `Admin` access.
-Set the aws profile in your CLI, i.e.
-
 ```
 $ export AWS_DEFAULT_PROFILE=<your_aws_profile_name>
 ```
-
-Clone this repository to your local machine
-
-```
-$ git clone https://github.com/Team-Hama/A-Hybrid-Journey-for-Minecraft-Server-Scalability-with-AWS.git
-```
-
-Change directory to [infra](./infra) and update the
-[variables.tf](./infra/variables.tf) and [local.tf](./infra/local.tf)
-accordingly. Check the plan and initiate apply to create the VPC, and the EKS
-cluster, along with Karpenter to scale the node pool.
 
 Before you continue, you need to enable your AWS account to launch Spot
 instances if you haven't launched any yet. To do so, create the
@@ -127,6 +111,17 @@ instances:
 ```
 An error occurred (InvalidInput) when calling the CreateServiceLinkedRole operation: Service role name AWSServiceRoleForEC2Spot has been taken in this account, please try a different suffix.
 ```
+
+### 2. Clone this repository to your local machine
+
+```
+$ git clone https://github.com/Team-Hama/A-Hybrid-Journey-for-Minecraft-Server-Scalability-with-AWS.git
+```
+
+Change directory to [infra](./infra) and update the
+[variables.tf](./variables.tf), [terraform.tfvars](./terraform.tfvars) and [local.tf](./infra/local.tf)
+accordingly. Check the plan and initiate apply to create the VPC, and the EKS
+cluster, along with Karpenter to scale the node pool.
 
 To create the cluster, run the following commands:
 
@@ -153,7 +148,7 @@ Check the AWS console for the newly created VPC **[VPC ID from the Terraform
 output]**
 
 ```
-$ aws ec2 describe-vpcs --vpc-ids "vpc-0ae0071a560b7a269" --region=us-east-2
+$ aws ec2 describe-vpcs --vpc-ids "vpc-0ae0071a560b7a269" --region=ap-northeast-2
 {
     "Vpcs": [
         {
@@ -198,10 +193,41 @@ $ aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
 Then, check the EKS cluster, i.e.
 
 ```
-$ eksctl get cluster --name=eks-cluster --region=us-east-2
+$ eksctl get cluster --name=eks-cluster --region=ap-northeast-2
 NAME            VERSION STATUS  CREATED                 VPC                     SUBNETS                                                                         SECURITYGROUPS  PROVIDER
 eks-cluster     1.30    ACTIVE  2024-09-10T14:19:44Z    vpc-0ae0071a560b7a269   subnet-022e5f6ce1670fe14,subnet-02e1475b6290fcba6,subnet-0c62df535bc954c1f                      EKS
 ```
+
+## Connect Network Between On-premise and AWS VPC using Transit Gateway and site to site VPN
+> We asked our carrier to assign a public IP to our computers on-premises.VyOS needs to be given a public IP by DHCP to implement Site to Site VPN.
+
+* Enter the Public IP of your VyOS into a variable in Terraform.tfvar and TGW and Customer GW will configure themselves.
+* However, Terraform can't implement Site to Site VPN, so we have to do this by hand
+* Try implementing it in the console via the link below
+
+[Site to Site VPN](https://publish.obsidian.md/rynforce/AWS+Cloud+School/Project/Final+Project/Document/Site+to+Site+VPN)
+
+## EKS Replica Expansion by CloudWatch Agent in On-premise
+Unfortunately, we were unable to implement the Cloudwatch part with Terraform.
+
+Please see below for instructions on how to set it up with the console
+
+[How to trigger Lambda function](https://publish.obsidian.md/rynforce/AWS+Cloud+School/Project/Final+Project/Document/How+to+trigger+Lambda+function+by+CW+Alarm)
+
+## Jenkins
+"Jenkins is an open-source automation server that facilitates the automation of software development processes, such as building, testing, and deploying applications. As a widely adopted tool for Continuous Integration and Continuous Delivery (CI/CD), Jenkins enables teams to efficiently manage and accelerate their development pipelines by automating repetitive tasks. With its extensive plugin ecosystem, Jenkins can integrate with numerous tools, making it highly adaptable to different workflows and environments.
+
+For more information about Jenkins and a deeper understanding of CI/CD, please refer to [this link](https://publish.obsidian.md/rynforce/AWS+Solution+Architect/Contents/Other+AWS+services+at+ASP)."
+
+### Web application
+
+![](img/Web_Topology.png)
+
+For a repo of the image files built with Jenkins, please see the following [link](https://github.com/Team-Hama/Final_project_hama_web)
+
+### Game application
+![](img/Game_Topology.png)
+For a repo of the image files built with Jenkins, please see the following link
 
 ## Autoscaling
 
@@ -239,15 +265,10 @@ nginx-deployment-576c6b7b6-b4f8p   1/1     Running   0          22s
 ```
 
 There are `3` pods running, as mentioned in the `YAML` file.
-
-Change it to `30` in the [nginx-deployment.yml](./EKS/nginx-deployment.yml)
-file, and apply again.
+for scale out to 30 pods, input comment below
 
 ```
-$ kubectl apply -f nginx-deployment.yml
-deployment.apps/nginx-deployment configured
-$ kubectl get pods --output name | wc -l
-30
+kubectl scale deployment/nginx-depolyment --replicas=30
 ```
 
 We still have `1` worker node, as it is sufficient to accommodate all the `30` pods.
@@ -263,10 +284,7 @@ replica from `30` to `150` , and apply the change. Wait for a couple of minutes,
 and check for the nodes again.
 
 ```
-$ kubectl apply -f nginx-deployment.yml 
-deployment.apps/nginx-deployment configured
-$ kubectl get pods --output name | wc -l
-150
+$ kubectl scale deployment/nginx-depolyment --replicas=30
 $ kubectl get nodes 
 NAME                                        STATUS   ROLES    AGE   VERSION
 ip-10-0-101-90.us-east-2.compute.internal   Ready    <none>   51m   v1.30.2-eks-1552ad0
@@ -311,42 +329,11 @@ m":{"name":"default-wgbwq"},"namespace":"","name":"default-wgbwq","reconcileID":
 
 ```
 
-### HPA (Horizontal Pod Autoscaling)
+If you're interested in learning more about Karpenter, check out the links below
 
-Now, let's deploy [echoserver_full.yml](./EKS/echoserver_full.yml) and access
-it via the DNS we get from the AWS ALB. BTW, it will be an `Application Load
-Balancer`, as we have an `Ingress` between the `ALB` and the `Service`.
+[Karpenter Main page](https://publish.obsidian.md/rynforce/DevOps/Kubernetes/Karpenter+Main+page)
 
-```
-$ kubectl apply -f echoserver_full.yml
-namespace/echoserver created
-deployment.apps/echoserver created
-service/echoserver created
-horizontalpodautoscaler.autoscaling/echoserver created
-ingress.networking.k8s.io/echoserver created
-$ kubectl get ing -n echoserver echoserver
-NAME         CLASS   HOSTS   ADDRESS                                                                   PORTS   AGE
-echoserver   alb     *       k8s-echoserv-echoserv-0c6afc926b-1788058414.us-east-2.elb.amazonaws.com   80      35s
-```
-
-You can use stress testing tools like [**oha-docker**](https://github.com/ahmadalsajid/oha-docker)
-to put some load on the application, and check the HPA in action.
-
-```
-$ docker run --rm -it ahmadalsajid/oha-docker  -n 50000 -c 1500 http://k8s-echoserv-echoserv-0c6afc926b-1788058414.us-east-2.elb.amazonaws.com
-```
-
-Some commands that you can use to watch what happens with the deployment,
-autoscaling, and so on
-
-```
-$ kubectl get all -n echoserver
-$ kubectl get hpa echoserver -n echoserver
-$ kubectl get hpa echoserver -n echoserver --watch
-$ kubectl describe hpa echoserver -n echoserver
-$ kubectl get deployment echoserver -n echoserver
-$ kubectl edit horizontalpodautoscaler.autoscaling/echoserver -n echoserver
-```
+[Karpenter A to Z](https://github.com/Rynf0rce/karpenter-A-to-Z)
 
 ## Monitoring with Prometheus & Grafana
 
@@ -407,57 +394,6 @@ grafana      alb     *       k8s-monitori-grafana-0d481f4284-1538150578.us-east-
 prometheus   alb     *       k8s-monitori-promethe-f7484f4f25-423861633.us-east-2.elb.amazonaws.com   80      25m
 ```
 
-## ConfigMap and Secrets [with AWS parameter store]
-
-Set `enable_external_secrets = true` in `module "eks_blueprints_addons"` from
-[eks_cluster.tf](./infra/eks_cluster.tf) to use external secrets. Also, a
-kubectl manifest will be executed to create `ClusterSecretStore` which will
-connect to AWS Parameter Store to get the secrets from there. As the secrets
-are passed to the deployments as env variables, we used `helm_releases` to
-install [Reloader](https://github.com/stakater/Reloader) so that when a secret
-is updated in Parameter Store, the pods/Deployments/StatefulSets are recreated
-to reflect the changes in the environment variables. Details example can be
-found at [env-echoserver.yml](./EKS/env-echoserver.yml) file, where the
-`ExternalSecret` sync the secrets from AWS and sends to pods via environment
-variable. Fist, deploy it with
-
-```
-$ kubectl apply -f env-echoserver.yml        
-namespace/envechoserver created
-externalsecret.external-secrets.io/envechoserver-secrets created
-deployment.apps/envechoserver created
-service/envechoserver created
-ingress.networking.k8s.io/envechoserver created 
-```
-
-After a couple of minutes, check the ALB URL and carefully look for the
-environment variables that is passed the pod, i.e. `db-admin`, `db-password`,
-`another-db-admin`, & `another-db-password`. After that, change the value(s)
-from AWS Parameter Store, and after some time, visit the URL again, you will
-see the changes reflected in the response. Also, check the `Reloader` logs
-to get a better understanding.
-
-```
-$ kubectl logs stakater-reloader-reloader-66bcf4fc6-95jd5   
-time="2024-09-16T01:17:29Z" level=info msg="Environment: Kubernetes"
-time="2024-09-16T01:17:29Z" level=info msg="Starting Reloader"
-time="2024-09-16T01:17:29Z" level=warning msg="KUBERNETES_NAMESPACE is unset, will detect changes in all namespaces."
-time="2024-09-16T01:17:29Z" level=info msg="created controller for: configMaps"
-time="2024-09-16T01:17:29Z" level=info msg="Starting Controller to watch resource type: configMaps"
-time="2024-09-16T01:17:29Z" level=info msg="created controller for: secrets"
-time="2024-09-16T01:17:29Z" level=info msg="Starting Controller to watch resource type: secrets"
-time="2024-09-16T01:18:56Z" level=info msg="Changes detected in 'database-secret' of type 'SECRET' in namespace 'envechoserver'; updated 'envechoserver' of type 'Deployment' in namespace 'envechoserver'"
-```
-
-Some useful commands would be
-
-```
-$ kubectl -n envechoserver get externalsecret
-$ kubectl -n envechoserver describe externalsecret <external_secret_name>
-$ kubectl -n envechoserver get secrets
-$ kubectl -n envechoserver describe secret <secret_name>
-```
-
 ## Create IAM users for granting access to EKS
 
 If you want to create IAM users and assign them administrator access or some
@@ -471,6 +407,14 @@ If you are using the `kube-prometheus-stack`, CRDs created by this chart are
 not removed by default and should be manually cleaned up:
 
 ```
+start=$(date +%s)
+kubectl delete -f ../EKS/echoserver_full.yml
+kubectl delete -f ../EKS/env-echoserver.yml
+kubectl patch ingress argocd-ingress -n argocd -p '{"metadata":{"finalizers":[]}}' --type=merge
+kubectl patch ingress grafana -n monitoring -p '{"metadata":{"finalizers":[]}}' --type=merge
+kubectl patch ingress kube-ops-ingress -n monitoring -p '{"metadata":{"finalizers":[]}}' --type=merge
+kubectl patch ingress prometheus -n monitoring -p '{"metadata":{"finalizers":[]}}' --type=merge
+kubectl delete nodes --all
 kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
 kubectl delete crd alertmanagers.monitoring.coreos.com
 kubectl delete crd podmonitors.monitoring.coreos.com
@@ -481,18 +425,19 @@ kubectl delete crd prometheusrules.monitoring.coreos.com
 kubectl delete crd scrapeconfigs.monitoring.coreos.com
 kubectl delete crd servicemonitors.monitoring.coreos.com
 kubectl delete crd thanosrulers.monitoring.coreos.com
-```
+kubectl delete --all nodeclaim
+kubectl delete --all nodepool
+kubectl delete --all ec2nodeclass
 
-Also, remove the Ingress for Grafana Dashboard
-
+cluster_arn=$(kubectl config get-clusters | grep "arn:aws:eks:")
+kubectl config  delete-cluster "${cluster_arn}"
+terraform destroy --auto-approve
+end=$(date +%s)
+echo Execution time was "$((end - start))" seconds.
 ```
-$ kubectl delete -f grafana.yml
-```
-
 **Always delete the AWS resources to save money after you are done.**
 
 ```
-$ kubectl delete -f echoserver_full.yml
 $ kubectl delete --all nodeclaim
 $ kubectl delete --all nodepool
 $ kubectl delete --all ec2nodeclass
@@ -505,7 +450,7 @@ the resources.
 
 
 ## References
-
+* [VyOS로 AWS Site to Site VPN 구축 및 테스트](https://slashpage.com/mchlkim/y9e1xp2x4y76427k35vz?lang=ko)
 * [terraform-aws-eks-blueprints](https://aws-ia.github.io/terraform-aws-eks-blueprints/getting-started/)
 * [Karpenter getting started](https://karpenter.sh/docs/getting-started/getting-started-with-karpenter/)
 * [karpenter-blueprints](https://github.com/aws-samples/karpenter-blueprints/tree/main)
