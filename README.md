@@ -1,6 +1,7 @@
 # A Hybrid Journey for Minecraft Server Scalability with AWS main page
 ![](img/main.png)
 > The main page of the final project written and organized in Terraform for [The Amazon Cloud School 5th](https://edu.rapa.or.kr/archive/652) by [RAPA](https://edu.rapa.or.kr/).
+> 
 > For more detailed information, please refer to [this link](https://publish.obsidian.md/rynforce/AWS+Cloud+School/Project/Final+Project/0.+Final+Project+Main+Page).
 
 ## Architecture
