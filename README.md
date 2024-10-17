@@ -490,6 +490,7 @@ the resources.
 | 정진우 (rynf0rce) | 강성훈 (ksh0811) | 오재석 (ojs201) | 차진우 (rttitity) | 임승환 (shlim0118) | 한 석 (Hanseok-git) |
 
 # Thanks to
-| <a href="https://github.com/pcmin929"><img src="https://github.com/pcmin929.png" width="80px"></a> |
-| :---: |
-| 박찬민 (전임강사) |
+| <a href="https://github.com/pcmin929"><img src="https://github.com/pcmin929.png" width="80px"></a> | <a href="https://github.com/songminjjuk"><img src="https://github.com/songminjjuk.png" width="80px"></a> | <a href="https://github.com/guswns8431"><img src="https://github.com/guswns8431.png" width="80px"></a> |
+| :---: | :---: | :---: |
+| 박찬민 (전임강사) | 송민석 (교육생) | 손현준 (교육생) |
+
