@@ -231,7 +231,7 @@ For a repo of the image files built with Jenkins, please see the following [link
 
 ### Game application
 ![](img/Game_Topology.png)
-For a repo of the image files built with Jenkins, please see the following link
+For a repo of the image files built with Jenkins, please see the following [link](https://github.com/Team-Hama/hama-minecraft)
 
 ## Autoscaling
 
